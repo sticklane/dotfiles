@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__fextralife__search_wiki",
+      "mcp__fextralife__get_page",
+      "mcp__fextralife__get_table",
+      "mcp__fextralife__list_pages"
+    ]
+  },
+  "model": "claude-fable-5[1m]",
+  "enabledPlugins": {
+    "prompt-improver@claude-code-marketplace": true,
+    "auto-memory@claude-code-marketplace": false,
+    "this-little-wiggy@claude-code-marketplace": true,
+    "cloudflare@cloudflare": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "cloudflare": {
+      "source": {
+        "source": "github",
+        "repo": "cloudflare/skills"
+      }
+    }
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "fastMode": true,
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true
+}
