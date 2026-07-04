@@ -3,3 +3,6 @@
 # and is symlinked into ~/.claude/skills/, or (private ones) lives there
 # untracked with a self-excluding .gitignore.
 .claude/skills/
+
+# ~/specs is its own private repo (sticklane/specs) — never tracked here.
+specs/
