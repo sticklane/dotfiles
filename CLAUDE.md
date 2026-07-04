@@ -24,7 +24,7 @@ Whenever code is written, the agent must take an extra pass to answer:
 ## Change Process
 - **Commit frequently**: Commit changes often to keep the history clean and easy to follow.
 - **Commit messages**: Use clear and concise commit messages that describe the changes made.
-- **Commit hooks**: Use the pre-commit hook to run code review, linting, and tests.
+- **Commit hooks**: Gated repos use a two-layer system — the git pre-commit hook runs fast staged-file checks only (format + lint; `--no-verify` to bypass), and the Claude Code Stop hook runs the repo's full `scripts/check.sh` (lint, typecheck, tests) before work can be called done.
 - **Be aware of staged changes**: It is good practice to check for and commit staged changes before starting a new task.
 - **Commit conflicts**: Resolve conflicts before committing.
 - **Commit history**: Keep the commit history clean and easy to follow.
@@ -32,12 +32,12 @@ Whenever code is written, the agent must take an extra pass to answer:
 - **Check for pending uncommitted changes**: Check for pending uncommitted changes before committing.
 - **Don't be afraid to split commits into multiple smaller commits**: Don't be afraid to split commits into multiple smaller commits to make the history easier to follow and keep changes focused and easy to revert.
 - **After comitting, take a moment to reflect: what could be improved?**: After comitting, take a moment to reflect: what could be improved? Are there any issues that could be closed? Are there any tasks that could be created to track the next steps?
-- **Commit on Task Completion**: Always commit changes when a task (bead) is completed. Do not leave changes uncommitted when moving to the next task.
+- **Commit on Task Completion**: Always commit changes when a task is completed. Do not leave changes uncommitted when moving to the next task.
 
 ## Workflow Preferences
 - **Chained Execution**: The user prefers to chain multiple tasks together without pausing for implementation plan reviews.
 - **Rapid Development**: Skip plan reviews unless there is high ambiguity or risk. Proceed directly to execution after creating the plan.
-- **Record plans**: When you create a plan, always record it in the bead.
+- **Record plans**: When you create a plan, always record it in the task file (or `docs/TASKS.md`).
 
 ## Docker / Container Builds
 - **ALWAYS use Cloud Build** for Docker images. NEVER build Docker images locally — local disk is too limited and Docker Desktop is unreliable.

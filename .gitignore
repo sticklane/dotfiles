@@ -1,0 +1,5 @@
+# Dotfiles repo ignore (work-tree = $HOME).
+# Personal skills are never tracked here: each lives in its own home repo
+# and is symlinked into ~/.claude/skills/, or (private ones) lives there
+# untracked with a self-excluding .gitignore.
+.claude/skills/
