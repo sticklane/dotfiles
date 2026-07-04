@@ -58,6 +58,17 @@ Test rules of thumb:
   `.gitignore` so no repo ever picks it up. The toolkit dev checkout is
   `~/claude`.
 
+## Repo navigability
+
+- Active repos use the orientation split: root `AGENTS.md` = orientation
+  (purpose, `## Map`, `## Commands` — verified by running, `## State`);
+  `CLAUDE.md` = conventions + an `@AGENTS.md` bridge line near the top; both
+  ≤200 lines; `README.md` for humans. Never write a command you didn't just
+  run.
+- In a repo missing these, offer /onboard rather than ad-hoc fixes.
+- `~/REPOS.md` (regenerated daily by `com.sjaconette.repo-index`) audits
+  compliance; a ✗ on a std-marked row is drift to fix.
+
 ## Token discipline
 
 Context is the scarce resource; pollution compounds turn over turn. Spend
