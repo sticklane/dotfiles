@@ -35,6 +35,29 @@ Test rules of thumb:
 - Repos without gates: run the repo's own lint/typecheck/test commands
   before finishing.
 
+## CI cost discipline (metered runners)
+
+Push-per-commit conventions multiply CI: every commit an agent pushes is a
+billed run on private repos (learned the hard way 2026-07 — the account's
+Actions budget was exhausted and all runners blocked account-wide). Every
+push-triggered pipeline on a metered runner (GitHub Actions, Cloudflare
+Workers Builds, Cloud Build triggers, …) MUST ship with all of:
+
+- `concurrency` group per ref + `cancel-in-progress: true` — burst pushes
+  supersede each other; never let a stale run finish (~2/3 of runs here
+  were superseded within 10 min). Exception: deploys may queue instead.
+- `paths-ignore` for docs-only pushes: `**.md`, `docs/**`, `specs/**`,
+  `.claude/**` — baton-pass/spec commits are the bulk of push traffic.
+- `timeout-minutes` on every job (default is 6 h).
+- Multi-stack repo: one workflow per stack with path filters, never one
+  workflow running every stack on every push. Deploy/build watch paths
+  (e.g. Workers Builds `path_includes`) get the same scoping.
+- `on: push` must name branches — a bare `on: push` + `pull_request`
+  double-runs every PR branch.
+
+Never make a path-filtered job a *required* status check without a no-op
+success fallback — skipped runs leave PRs stuck "Expected".
+
 ## Commits
 
 - Small, focused, atomic commits; commit at each TDD step (test → feat →
