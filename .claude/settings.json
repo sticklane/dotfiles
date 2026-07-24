@@ -8,19 +8,45 @@
     ]
   },
   "model": "claude-fable-5[1m]",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "AGENTPROF_BIN=$HOME/claude/agentprof/agentprof $HOME/claude/hooks/session-refresh/refresh-check.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/claude/hooks/handoff-resume/resume-check.sh"
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
-    "prompt-improver@claude-code-marketplace": true,
-    "auto-memory@claude-code-marketplace": false,
-    "this-little-wiggy@claude-code-marketplace": true,
     "cloudflare@cloudflare": true,
     "frontend-design@claude-plugins-official": true,
-    "agentic@agentic-toolkit": true
+    "agentic@agentic-toolkit": true,
+    "prompt-improver@severity1-marketplace": false
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
       "source": {
         "source": "github",
         "repo": "cloudflare/skills"
+      }
+    },
+    "severity1-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "severity1/severity1-marketplace"
       }
     }
   },
