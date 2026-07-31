@@ -12,18 +12,6 @@
     "decision-dash": "off",
     "codebase-memory": "off"
   },
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "AGENTPROF_BIN=$HOME/claude/agentprof/agentprof $HOME/claude/hooks/session-refresh/refresh-check.sh"
-          }
-        ]
-      }
-    ]
-  },
   "enabledPlugins": {
     "cloudflare@cloudflare": true,
     "frontend-design@claude-plugins-official": false,
