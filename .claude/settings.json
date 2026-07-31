@@ -5,9 +5,13 @@
       "mcp__fextralife__get_page",
       "mcp__fextralife__get_table",
       "mcp__fextralife__list_pages"
-    ]
+    ],
+    "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "skillOverrides": {
+    "decision-dash": "off",
+    "codebase-memory": "off"
+  },
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -18,23 +22,13 @@
           }
         ]
       }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/claude/hooks/handoff-resume/resume-check.sh"
-          }
-        ]
-      }
     ]
   },
   "enabledPlugins": {
     "cloudflare@cloudflare": true,
-    "frontend-design@claude-plugins-official": true,
-    "agentic@agentic-toolkit": true,
-    "prompt-improver@severity1-marketplace": false
+    "frontend-design@claude-plugins-official": false,
+    "prompt-improver@severity1-marketplace": false,
+    "dak@data-agent-kit-starter-pack-marketplace": false
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
@@ -48,11 +42,19 @@
         "source": "github",
         "repo": "severity1/severity1-marketplace"
       }
+    },
+    "data-agent-kit-starter-pack-marketplace": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/gemini-cli-extensions/data-agent-kit-starter-pack.git"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "fastMode": true,
   "tui": "fullscreen",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "agentPushNotifEnabled": true,
+  "inputNeededNotifEnabled": true
 }

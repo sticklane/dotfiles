@@ -72,20 +72,12 @@ success fallback — skipped runs leave PRs stuck "Expected".
 - Push after committing only when the task/repo conventions say so; some
   repos auto-push on commit (their hooks handle it).
 
-## Skills and agents
+## Skills
 
-- Toolkit skills (/build, /drain, /breakdown, scout/critic/verifier agents,
-  …) are served by the `agentic` plugin — never copy or symlink them into
-  `~/.claude/skills/`; copies shadow the plugin and go stale.
-- Toolkit skills are plugin-namespaced: invoke via the Skill tool as
-  `agentic:<name>` (e.g. `agentic:distill`) even when absent from the
-  session's skill listing — a bare `<name>` lookup wrongly reports it
-  unavailable (bit drain's terminal distill self-chain, 2026-07-20).
 - `~/.claude/skills/` holds personal skills only. Personal skills are not
   tracked in dotfiles: each lives in its own home repo and is symlinked in,
   or (for private ones) lives here untracked with a self-excluding
-  `.gitignore` so no repo ever picks it up. The toolkit dev checkout is
-  `~/claude`.
+  `.gitignore` so no repo ever picks it up.
 
 ## Repo navigability
 
@@ -94,7 +86,8 @@ success fallback — skipped runs leave PRs stuck "Expected".
   `CLAUDE.md` = conventions + an `@AGENTS.md` bridge line near the top; both
   ≤200 lines; `README.md` for humans. Never write a command you didn't just
   run.
-- In a repo missing these, offer /onboard rather than ad-hoc fixes.
+- In a repo missing these, offer to write the set as a unit rather than
+  patching one file ad hoc.
 - `~/REPOS.md` (regenerated daily by `com.sjaconette.repo-index`) audits
   compliance; a ✗ on a std-marked row is drift to fix.
 
@@ -103,15 +96,14 @@ success fallback — skipped runs leave PRs stuck "Expected".
 Context is the scarce resource; pollution compounds turn over turn. Spend
 main-context tokens on decisions; delegate raw-material consumption.
 
-- Never read files into main context to "look around" — use the `scout`
-  agent for where/how/what-exists questions; fan scouts out in parallel.
-  Read a file directly only when about to edit it, and prefer the relevant
-  slice.
-- Verification, review, and research belong in subagents (`verifier`,
-  `critic`, `Explore`) — their transcripts are discarded; only the final
-  report costs context.
-- Match model to work: mechanical/lookup → cheap tier (scout default);
-  judgment → session model. Don't pay frontier rates to run grep.
+- Never read files into main context to "look around" — delegate
+  where/how/what-exists questions to a read-only search subagent, and fan
+  several out in parallel for independent questions. Read a file directly
+  only when about to edit it, and prefer the relevant slice.
+- Verification, review, and research belong in subagents — their
+  transcripts are discarded, so only the final report costs context.
+- Match model to work: mechanical/lookup → cheap tier; judgment → session
+  model. Don't pay frontier rates to run grep.
 - One task per session; `/clear` between tasks. Resumable state lives in
   artifacts on disk (specs, task files, handoffs), never in conversation
   memory. Summarize command output instead of pasting it.
@@ -121,10 +113,9 @@ main-context tokens on decisions; delegate raw-material consumption.
 
 ## Writing quality (human-facing output only — never reasoning)
 
-The prose-review doctrine (agentic plugin; full rubric with sources in
-`~/claude/.claude/skills/prose-review/reference.md`) applies to everything
-written FOR A HUMAN READER — responses, summaries, commit messages, reports,
-PR/issue text — not just docs under review. It does NOT apply to thinking /
+This doctrine applies to everything written FOR A HUMAN READER — responses,
+summaries, commit messages, reports, PR/issue text — not just docs under
+review. It does NOT apply to thinking /
 chain-of-thought: reasoning is model-consumed working text, and constraining
 its style is uncompensated risk (same evidence as the machine-parsed rule
 below). Think however works best; apply the rubric only when composing what
@@ -137,7 +128,7 @@ the human reads. The always-on core:
   openers ("Got it", "Great question"); repetition/length without added
   content; blurry words ("things", "stuff") where a concrete specific
   belongs; progress narrated as achievement instead of reported as fact.
-- **No agentic-register tells**: meta-discourse ("Let me check…", "Now
+- **No agent-voice tells**: meta-discourse ("Let me check…", "Now
   I'll…" — do the thing, then state the result); false precision ("~40
   lines", "well under a minute" on a number already in hand — state it
   exactly); evaluative varnish ("clean", "solid", "robust" standing in for
@@ -151,9 +142,9 @@ the human reads. The always-on core:
   first use.
 
 Before writing or substantially reshaping a human-facing doc (README.md,
-AGENTS.md, docs/*.md), load `agentic:prose-review`'s authoring doctrine
-first (Diátaxis quadrant selection + Google essentials); review nontrivial
-doc work with `/prose-review` before calling it done.
+AGENTS.md, docs/*.md), choose its Diátaxis quadrant first, then apply the
+Google essentials above; re-read nontrivial doc work against this rubric
+before calling it done.
 
 **Machine-parsed prose (task files, specs, SKILL.md bodies, prompts) is a
 different register — research does not support human-style polish there.**
