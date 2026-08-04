@@ -16,7 +16,8 @@
     "cloudflare@cloudflare": true,
     "frontend-design@claude-plugins-official": false,
     "prompt-improver@severity1-marketplace": false,
-    "dak@data-agent-kit-starter-pack-marketplace": false
+    "dak@data-agent-kit-starter-pack-marketplace": false,
+    "superpowers@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
@@ -43,6 +44,11 @@
   "fastMode": true,
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
+  "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
-  "inputNeededNotifEnabled": true
+  "env": {
+    "SUPERPOWERS_DISABLE_TELEMETRY": "1"
+  },
+  "autoMemoryEnabled": true,
+  "autoDreamEnabled": true
 }
