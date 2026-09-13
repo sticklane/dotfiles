@@ -1,0 +1,2 @@
+# Containers listed here are exempt from cleanup.
+# Use one exact container name (without /) or full 64-character container ID per line.

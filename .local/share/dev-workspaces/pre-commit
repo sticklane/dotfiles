@@ -4,3 +4,6 @@ set -eu
 if git diff --cached --name-only | /usr/bin/grep -qE '^(.local/share/dev-workspaces/|.config/(dev-workspaces|worktrunk)/|Library/LaunchAgents/com.sjaconette.dev-workspaces.plist)'; then
   /Users/sjaconette/.local/share/dev-workspaces/check.sh
 fi
+if git diff --cached --name-only | /usr/bin/grep -qE '^(\.local/(share/docker-cleanup/|bin/docker-cleanup$)|\.config/docker-cleanup/|Library/LaunchAgents/com\.sjaconette\.docker-cleanup\.plist$)'; then
+  /Users/sjaconette/.local/share/docker-cleanup/check.sh
+fi
