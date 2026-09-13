@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+# Only the storage implementation needs these checks; unrelated dotfile commits stay fast.
+if git diff --cached --name-only | /usr/bin/grep -qE '^(.local/share/dev-workspaces/|.config/(dev-workspaces|worktrunk)/|Library/LaunchAgents/com.sjaconette.dev-workspaces.plist)'; then
+  /Users/sjaconette/.local/share/dev-workspaces/check.sh
+fi

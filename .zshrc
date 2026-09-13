@@ -33,7 +33,7 @@ export PATH="/Users/sjaconette/terminal-tasks/bin:$PATH"
 
 # Move large caches to external drive when available
 _ext="/Volumes/My Passport/.caches"
-if [ -d "$_ext" ]; then
+if [ -d "$_ext" ] && [ "${DEV_WORKSPACE_MANAGED:-}" != "1" ]; then
     export UV_CACHE_DIR="$_ext/uv"
     export PIP_CACHE_DIR="$_ext/pip"
     export PUPPETEER_CACHE_DIR="$_ext/puppeteer"
@@ -46,3 +46,6 @@ unset _ext
 
 # dotfiles repo (bare, work-tree=$HOME) — set up 2026-07-03
 alias dot='git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME'
+
+autoload -Uz compinit && compinit
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi

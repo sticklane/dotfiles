@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.sjaconette.dev-workspaces</string>
+  <key>ProgramArguments</key>
+  <array><string>/Users/sjaconette/.local/bin/dev-workspace</string><string>service</string></array>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/Users/sjaconette/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+  <key>WorkingDirectory</key><string>/Users/sjaconette</string>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>/dev/null</string>
+  <key>StandardErrorPath</key><string>/Users/sjaconette/.local/state/dev-workspaces/service.log</string>
+</dict>
+</plist>

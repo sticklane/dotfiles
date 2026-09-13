@@ -1,0 +1,27 @@
+# Machine-wide defaults for NEW workspaces. Existing worktrees are never adopted.
+worktree-path = "/Volumes/dev-workspaces/worktrees/{{ repo }}-{{ repo_path | hash }}/{{ branch | sanitize_hash }}"
+
+[commit]
+stage = "none"
+
+[merge]
+commit = false
+squash = false
+rebase = false
+remove = true
+verify = true
+
+[remove]
+delete-branch = false
+
+[pre-switch]
+storage = "/Users/sjaconette/.local/bin/dev-workspace hook admit"
+
+[pre-start]
+storage = "/Users/sjaconette/.local/bin/dev-workspace hook register"
+
+[pre-remove]
+storage = "/Users/sjaconette/.local/bin/dev-workspace hook guard"
+
+[post-remove]
+storage = "/Users/sjaconette/.local/bin/dev-workspace hook removed"

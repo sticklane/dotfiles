@@ -1,0 +1,15 @@
+{
+  "root": "/Volumes/dev-workspaces",
+  "volume_uuid": "9B69F4CC-039E-4341-BD2D-AD67F5F92D77",
+  "backing_path": "/Volumes/SSK SSD",
+  "backing_uuid": "F23C4FE3-0881-3449-9632-F4A01553B498",
+  "image": "/Volumes/SSK SSD/development/dev-workspaces.sparsebundle",
+  "state_dir": "/Users/sjaconette/.local/state/dev-workspaces",
+  "internal_path": "/Users/sjaconette",
+  "pool_min_gib": 8,
+  "backing_min_gib": 12,
+  "internal_min_gib": 2,
+  "reserve_gib": 4,
+  "max_workspaces": 12,
+  "retention_hours": 24
+}

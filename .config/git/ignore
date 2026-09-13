@@ -1,0 +1,4 @@
+**/.claude/settings.local.json
+
+# Rebuildable scratch owned by dev-workspace leases.
+**/.dev-build/

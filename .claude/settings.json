@@ -17,7 +17,8 @@
     "frontend-design@claude-plugins-official": false,
     "prompt-improver@severity1-marketplace": false,
     "dak@data-agent-kit-starter-pack-marketplace": false,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "worktrunk@worktrunk": true
   },
   "extraKnownMarketplaces": {
     "cloudflare": {
@@ -36,6 +37,12 @@
       "source": {
         "source": "git",
         "url": "https://github.com/gemini-cli-extensions/data-agent-kit-starter-pack.git"
+      }
+    },
+    "worktrunk": {
+      "source": {
+        "source": "github",
+        "repo": "max-sixty/worktrunk"
       }
     }
   },
