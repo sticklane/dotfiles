@@ -50,30 +50,56 @@ func (m *Manager) Admit(repo, branch string) error {
 		if count >= m.cfg.MaxWorkspaces {
 			return fmt.Errorf("workspace limit %d reached; finish or park existing work", m.cfg.MaxWorkspaces)
 		}
-		reserved := uint64(count+1) * m.cfg.ReserveGiB * GiB
-		for _, check := range []struct {
-			path    string
-			floor   uint64
-			reserve bool
-		}{{m.cfg.Root, m.cfg.PoolMinGiB, true}, {m.cfg.BackingPath, m.cfg.BackingMinGiB, true}, {m.cfg.InternalPath, m.cfg.InternalMinGiB, false}} {
-			if check.path == "" {
-				continue
-			}
-			free, e := m.space(check.path)
-			if e != nil {
-				return e
-			}
-			need := check.floor * GiB
-			if check.reserve {
-				need += reserved
-			}
-			if free < need {
-				return fmt.Errorf("storage admission refused: %s has %.1f GiB free; %.1f GiB required including reservations", check.path, float64(free)/float64(GiB), float64(need)/float64(GiB))
-			}
+		if e := m.checkCapacity(activeReservations(s) + 1); e != nil {
+			return e
 		}
 		s.Pending[key] = m.now()
 		return nil
 	})
+}
+
+// activeReservations counts future growth, not retained source checkouts.
+// Call only while holding the registry lock. Cleanup eligibility is independent.
+func activeReservations(s *State) int {
+	count := len(s.Pending)
+	for _, w := range s.Workspaces {
+		if !w.Missing && workspaceActive(w) {
+			count++
+		}
+	}
+	return count
+}
+func workspaceActive(w *Workspace) bool {
+	for _, lease := range w.Leases {
+		if live(lease) {
+			return true
+		}
+	}
+	return false
+}
+func (m *Manager) checkCapacity(reservations int) error {
+	reserved := uint64(reservations) * m.cfg.ReserveGiB * GiB
+	for _, check := range []struct {
+		path    string
+		floor   uint64
+		reserve bool
+	}{{m.cfg.Root, m.cfg.PoolMinGiB, true}, {m.cfg.BackingPath, m.cfg.BackingMinGiB, true}, {m.cfg.InternalPath, m.cfg.InternalMinGiB, false}} {
+		if check.path == "" {
+			continue
+		}
+		free, e := m.space(check.path)
+		if e != nil {
+			return e
+		}
+		need := check.floor * GiB
+		if check.reserve {
+			need += reserved
+		}
+		if free < need {
+			return fmt.Errorf("storage admission refused: %s has %.1f GiB free; %.1f GiB required including reservations", check.path, float64(free)/float64(GiB), float64(need)/float64(GiB))
+		}
+	}
+	return nil
 }
 func (m *Manager) Register(path string) error {
 	if e := m.verify(); e != nil {
@@ -270,7 +296,26 @@ func (m *Manager) Pin(path string, pin bool) error {
 }
 func (m *Manager) Lease(path string) (string, error) {
 	token := randomID()
-	e := m.withWorkspace(path, func(w *Workspace) error {
+	p, e := m.managedPath(path)
+	if e != nil {
+		return "", e
+	}
+	if e = m.verify(); e != nil {
+		return "", e
+	}
+	e = m.update(func(s *State) error {
+		expirePending(s, m.now())
+		w, ok := s.Workspaces[p]
+		if !ok {
+			return fmt.Errorf("workspace is not registered")
+		}
+		count := activeReservations(s)
+		if !workspaceActive(w) {
+			count++
+		}
+		if e := m.checkCapacity(count); e != nil {
+			return e
+		}
 		if e := m.identity(w); e != nil {
 			return e
 		}

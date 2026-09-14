@@ -132,7 +132,10 @@ func TestRemovalRequiresIdentityPinAndLeaseChecks(t *testing.T) {
 }
 
 func TestBudgetIncludesConcurrentReservations(t *testing.T) {
-	m, repo, _ := fixture(t)
+	m, repo, path := fixture(t)
+	if _, e := m.Lease(path); e != nil {
+		t.Fatal(e)
+	}
 	m.space = func(string) (uint64, error) { return 10 * GiB, nil }
 	m.cfg.BackingMinGiB = 0
 	m.cfg.InternalMinGiB = 0
@@ -284,4 +287,38 @@ func TestOwnerCanFinishButLeaseStillBlocksRemoval(t *testing.T) {
 	if e = m.Guard(p); e == nil {
 		t.Fatal("completion bypassed active lease")
 	}
+}
+
+func TestIdleWorkspaceDoesNotReserveGrowthButResumeDoes(t *testing.T) {
+	m, repo, path := fixture(t)
+	m.space = func(string) (uint64, error) { return 8 * GiB, nil }
+	if e := m.Admit(repo, "new"); e != nil {
+		t.Fatal(e)
+	}
+	// Pending creation already reserves four GiB. Resuming another workspace
+	// would exceed the remaining capacity and must not acquire a lease.
+	if _, e := m.Lease(path); e == nil {
+		t.Fatal("resume overcommitted pool")
+	}
+	s, e := m.ReadState()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if len(s.Workspaces[path].Leases) != 0 {
+		t.Fatal("failed resume left lease")
+	}
+}
+func TestNestedLeaseCountsWorkspaceOnce(t *testing.T) {
+	m, _, path := fixture(t)
+	m.space = func(string) (uint64, error) { return 8 * GiB, nil }
+	a, e := m.Lease(path)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer m.Release(path, a)
+	b, e := m.Lease(path)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer m.Release(path, b)
 }

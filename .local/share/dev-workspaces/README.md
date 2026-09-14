@@ -67,8 +67,11 @@ mount points. A missing, wrong, suffixed, or read-only mount fails closed; there
 is no internal-disk fallback. Worktrunk path settings live in
 `~/.config/worktrunk/config.toml` and include repository and branch identity.
 
-Every new workspace reserves 4 GiB. Admission serializes reservations, includes
-in-flight creations, and requires 8 GiB free in the pool, 12 GiB on SSK, and 2 GiB
+Each pending creation and workspace with a live process lease reserves 4 GiB
+of future growth. Idle retained checkouts reserve no additional growth; their
+allocated bytes are already reflected in free space. Acquiring a lease rechecks
+capacity under the same registry lock, and nested leases count once per workspace.
+Admission serializes reservations, includes in-flight creations, and requires 8 GiB free in the pool, 12 GiB on SSK, and 2 GiB
 internally **after** reservations where relevant. Maximum registry count is 12;
 current backing-drive headroom permits far fewer. These are admission checks,
 not filesystem quotas: an already running build or unrelated application can
