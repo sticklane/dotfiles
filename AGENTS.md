@@ -41,7 +41,7 @@ Whenever code is written, the agent must take an extra pass to answer:
 1.  **Does it make sense?** Is the logic sound and easy to follow?
 2.  **Does it follow best practices?** Are we using modern patterns and avoiding anti-patterns?
 3.  **Could it be simpler?** Can we reduce complexity without sacrificing functionality?
-4.  **Is there Tech Debt?** If you spot technical debt or future improvements, add it to the repo's `docs/TASKS.md` (or open a spec under `specs/` for larger work).
+4.  **Is there Tech Debt?** If you spot technical debt or future improvements, create a task in Beads (`bd create "Title" -t chore`).
 
 ## Code Quality
 - **Type Safety**: We strongly prefer statically typed languages (e.g., TypeScript, Go, Rust). For existing JavaScript codebases, prioritize converting to TypeScript. Use JSDoc only as a temporary measure.
@@ -57,19 +57,4 @@ only under the repository's active publication policy. Preserve unrelated work.
 ## Workflow Preferences
 - **Chained Execution**: The user prefers to chain multiple tasks together without pausing for implementation plan reviews.
 - **Rapid Development**: Skip plan reviews unless there is high ambiguity or risk. Proceed directly to execution after creating the plan.
-- **Record plans**: When you create a plan, always record it in the task file (or `docs/TASKS.md`).
-
-## Docker / Container Builds
-- **ALWAYS use Cloud Build** for Docker images. NEVER build Docker images locally — local disk is too limited and Docker Desktop is unreliable.
-- Build command: `gcloud builds submit --tag <image-uri> <context-dir> --timeout=1200`
-- Ensure `.gcloudignore` excludes large data dirs (test_frames, .venv, checkpoints, etc.)
-- The project uses Artifact Registry at `us-central1-docker.pkg.dev/fooszone/fooszone/`
-
-## Visual Test Log
-When visual regression tests need snapshot updates due to intentional UI changes, document the change in `docs/visual-test-log.md`. This log serves to:
-- Track patterns in which tests break most often
-- Identify opportunities to improve test targeting/isolation
-- Build evidence for decisions about test strategy adjustments
-- Help assess if tests are providing value vs. creating friction
-
-Each entry should note: what changed, which tests were affected, and observations about whether the test behavior was helpful.
+- **Record plans**: When you create a plan, always record it in the bead.

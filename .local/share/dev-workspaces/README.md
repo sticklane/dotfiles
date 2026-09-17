@@ -1,5 +1,21 @@
 # Managed development workspaces
 
+## Jujutsu integration (2026-09-16)
+
+Jujutsu (`jj`) is now the default change-management CLI, with Git as its backend.
+In a jj repository, `dev-workspace start <agent> <task>` creates a native jj workspace
+from `@-`; `dev-workspace create <task>` creates one without launching an agent.
+Both use the existing APFS pool, capacity reservations, registry identities, leases,
+and shared caches. Resume native jj workspaces by path, using `dev-workspace run`.
+They are pinned and retained: `finish` and the collector refuse Git-only cleanup of
+jj state. Explicit jj-aware preservation and cleanup review is required. Unpinning
+does not disable that guard. Existing registry entries remain backward compatible.
+Worktrunk still owns new Git-only worktrees and all existing Worktrunk worktrees.
+Never initialize jj inside a linked Git worktree, or use Worktrunk's Git commit/merge
+commands to change jj history. Fooszone (LFS) and SDD Harness (frozen runtime) retain
+Git. See `~/.config/jj/WORKFLOW.md`; the rest of this document describes the retained
+Git/Worktrunk lifecycle unless a section explicitly says jj.
+
 Worktrunk owns new Git worktrees. `dev-workspace` supplies admission, process leases,
 preservation checks, per-workspace scratch, shared native caches, and crash recovery.
 The code uses only the Go standard library. Configuration and source are tracked in

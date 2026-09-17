@@ -37,6 +37,7 @@ type Lease struct {
 	Seen  time.Time `json:"seen"`
 }
 type Workspace struct {
+	Backend  string           `json:"backend,omitempty"`
 	ID       string           `json:"id"`
 	Path     string           `json:"path"`
 	GitDir   string           `json:"git_dir"`

@@ -42,6 +42,9 @@ func loadConfig() (Config, error) {
 	return c, nil
 }
 func currentWorkspace() string {
+	if p, e := command("", "jj", "--ignore-working-copy", "root"); e == nil {
+		return p
+	}
 	p, e := git("", "rev-parse", "--show-toplevel")
 	if e == nil {
 		return p
@@ -63,6 +66,7 @@ func main() {
 func entry(args []string) error {
 	if len(args) == 0 || args[0] == "help" || args[0] == "--help" {
 		fmt.Println(`dev-workspace start <claude|codex|gemini> <branch> [-- agent arguments]
+dev-workspace create <task-name>          Create a retained native jj workspace
 dev-workspace run <command> [arguments]    Run with a lease and managed caches
 dev-workspace finish [path]              Mark preserved work for cleanup after 24 hours
 dev-workspace pin|unpin [path]           Control explicit retention
@@ -88,6 +92,20 @@ dev-workspace hook <admit|register|guard|removed>  Worktrunk lifecycle hooks`)
 		return m.Mount()
 	case "compact":
 		return m.Compact()
+	case "create":
+		if len(args) != 2 {
+			return fmt.Errorf("create requires a jj task name")
+		}
+		if e := m.Mount(); e != nil {
+			return e
+		}
+		p, e := m.CreateJJ(currentWorkspace(), args[1])
+		if e != nil {
+			return e
+		}
+		return printJSON(struct {
+			Path string `json:"path"`
+		}{p})
 	case "start":
 		if len(args) < 3 {
 			return fmt.Errorf("start requires agent and branch")
@@ -227,6 +245,14 @@ func (m *Manager) Start(agent, branch string, args []string) error {
 	repo, e := os.Getwd()
 	if e != nil {
 		return e
+	}
+	if _, e := command(repo, "jj", "--ignore-working-copy", "root"); e == nil {
+		path, e := m.CreateJJ(repo, branch)
+		if e != nil {
+			return e
+		}
+		fmt.Fprintln(os.Stderr, "Native jj workspace (retained):", path)
+		return m.Run(path, append([]string{agent}, args...))
 	}
 	// Admission also runs through the global Worktrunk hook, including Claude native isolation.
 	if e = m.Admit(repo, branch); e != nil {

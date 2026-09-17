@@ -1,0 +1,19 @@
+#:schema https://docs.jj-vcs.dev/latest/config-schema.json
+
+[user]
+name = "Steven"
+email = "steven.jaconette@gmail.com"
+
+[git]
+colocate = true
+
+[snapshot]
+auto-track = "none()"
+
+[ui]
+default-command = "status"
+diff-formatter = ":git"
+
+[aliases]
+st = ["status"]
+lg = ["log", "--limit", "15"]

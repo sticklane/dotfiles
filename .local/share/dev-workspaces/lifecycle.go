@@ -142,6 +142,9 @@ func (m *Manager) Register(path string) error {
 	})
 }
 func (m *Manager) identity(w *Workspace) error {
+	if w.Backend == "jj" {
+		return m.jjIdentity(w)
+	}
 	if _, e := m.managedPath(w.Path); e != nil {
 		return e
 	}
@@ -180,6 +183,9 @@ func disposable(name string) bool {
 	return false
 }
 func (m *Manager) check(w *Workspace) error {
+	if w.Backend == "jj" {
+		return fmt.Errorf("native jj workspace retained: Git-only cleanup cannot prove jj preservation; use an explicit jj-aware cleanup review")
+	}
 	if e := m.identity(w); e != nil {
 		return e
 	}
