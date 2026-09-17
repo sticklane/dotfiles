@@ -10,6 +10,6 @@
   "backing_min_gib": 12,
   "internal_min_gib": 2,
   "reserve_gib": 4,
-  "max_workspaces": 24,
+  "max_workspaces": 32,
   "retention_hours": 24
 }
