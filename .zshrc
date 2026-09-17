@@ -38,6 +38,7 @@ if [ -d "$_ext" ] && [ "${DEV_WORKSPACE_MANAGED:-}" != "1" ]; then
     export PIP_CACHE_DIR="$_ext/pip"
     export PUPPETEER_CACHE_DIR="$_ext/puppeteer"
     export HOMEBREW_CACHE="$_ext/homebrew"
+    export HOMEBREW_NO_BOOTSNAP=1  # bootsnap grew to 18 GB on exFAT; the cache never hits there
 fi
 unset _ext
 
