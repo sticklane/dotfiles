@@ -70,7 +70,7 @@ Raw agent launches and commands using `--no-hooks` bypass parts of this protocol
 
 ## Storage and budgets
 
-The new `/Volumes/dev-workspaces` APFS pool is a **64 GiB maximum sparse image** at
+The `/Volumes/dev-workspaces` APFS pool is a **128 GiB maximum sparse image** at
 `/Volumes/SSK SSD/development/dev-workspaces.sparsebundle`. Its actual available
 capacity is limited by the backing drive. The separate 24 GiB Fooszone image is
 unchanged and is never unmounted or cleaned by this service.
@@ -88,7 +88,7 @@ of future growth. Idle retained checkouts reserve no additional growth; their
 allocated bytes are already reflected in free space. Acquiring a lease rechecks
 capacity under the same registry lock, and nested leases count once per workspace.
 Admission serializes reservations, includes in-flight creations, and requires 8 GiB free in the pool, 12 GiB on SSK, and 2 GiB
-internally **after** reservations where relevant. Maximum registry count is 12;
+internally **after** reservations where relevant. Maximum registry count is 24;
 current backing-drive headroom permits far fewer. These are admission checks,
 not filesystem quotas: an already running build or unrelated application can
 still exhaust a volume. Recovering roughly 25 GiB of internal headroom remains
