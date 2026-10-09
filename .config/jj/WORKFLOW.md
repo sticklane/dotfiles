@@ -73,6 +73,11 @@ Native workspaces have no `.git` directory; software that requires a Git working
 tree needs an explicitly evaluated compatibility route. Metadata queries can use
 `jj git root` to locate the backing store. Do not fabricate `.git` links/indexes.
 
+Native creation records its exact base and identity before checkout. An interrupted
+creation remains visible in `dev-workspace status` under `jj_creations`, reserves
+capacity, and requires the README's explicit manual recovery. Do not kill a slow
+checkout on an observation deadline or create another task to evade that record.
+
 Native jj workspaces start unfinished and are retained until explicit completion.
 Reuse an existing registered task path before creating another workspace. After all
 authored work is remotely preserved, review untracked and ignored data and run

@@ -172,7 +172,7 @@ func (m *Manager) Service() error {
 	if e != nil {
 		return e
 	}
-	if s.NeedsCompact && len(s.Workspaces) == 0 && len(s.Pending) == 0 {
+	if s.NeedsCompact && len(s.Workspaces) == 0 && len(s.Pending) == 0 && len(s.JJCreations) == 0 {
 		return m.Compact()
 	}
 	return nil
@@ -184,7 +184,7 @@ func (m *Manager) Compact() error {
 	}
 	return m.update(func(s *State) error {
 		expirePending(s, m.now())
-		if len(s.Workspaces) > 0 || len(s.Pending) > 0 {
+		if len(s.Workspaces) > 0 || len(s.Pending) > 0 || len(s.JJCreations) > 0 {
 			return fmt.Errorf("compaction waits until every managed workspace has been released")
 		}
 		if e := openFiles(m.cfg.Root); e != nil {

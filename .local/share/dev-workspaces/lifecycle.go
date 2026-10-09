@@ -41,7 +41,7 @@ func (m *Manager) Admit(repo, branch string) error {
 		if _, ok := s.Pending[key]; ok {
 			return nil
 		}
-		count := len(s.Pending)
+		count := len(s.Pending) + len(s.JJCreations)
 		for _, w := range s.Workspaces {
 			if !w.Missing {
 				count++
@@ -61,7 +61,7 @@ func (m *Manager) Admit(repo, branch string) error {
 // activeReservations counts future growth, not retained source checkouts.
 // Call only while holding the registry lock. Cleanup eligibility is independent.
 func activeReservations(s *State) int {
-	count := len(s.Pending)
+	count := len(s.Pending) + len(s.JJCreations)
 	for _, w := range s.Workspaces {
 		if !w.Missing && workspaceActive(w) {
 			count++

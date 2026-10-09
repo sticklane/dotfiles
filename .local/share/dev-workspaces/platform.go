@@ -18,7 +18,15 @@ import (
 func command(dir, name string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	c := exec.CommandContext(ctx, name, args...)
+	return runCommand(exec.CommandContext(ctx, name, args...), dir, name)
+}
+
+// Mutations may exceed a minute on external storage. Observation deadlines must
+// not kill them; durable intent protects against caller interruption.
+func commandMutation(dir, name string, args ...string) (string, error) {
+	return runCommand(exec.Command(name, args...), dir, name)
+}
+func runCommand(c *exec.Cmd, dir, name string) (string, error) {
 	c.Dir = dir
 	var errbuf bytes.Buffer
 	c.Stderr = &errbuf

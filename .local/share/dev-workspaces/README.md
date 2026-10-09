@@ -118,8 +118,10 @@ count as active owners. Completion may still be recorded by the owning agent. Wo
 Its pre-remove hook repeats the checks. These checks rely on cooperating launchers;
 they cannot eliminate races with arbitrary external writers bypassing the protocol.
 
-Interrupted creations expire their pending reservation after 10 minutes. An
-unregistered directory is never deleted. Crashed leases are reconciled by process
+Interrupted Git admission reservations expire after 10 minutes. Native jj creation
+records never expire: `jj_creations` retains the preselected identity, exact base,
+repository, name, path, and start time. They reserve capacity and remain excluded
+from leasing, completion, and collection. An unregistered directory is never deleted. Crashed leases are reconciled by process
 identity. Interrupted completed removal releases its Git registry entry on the next
 sweep. JJ interruptions remain explicit recovery records. Missing unfinished or identity-conflicting work stays reported for review.
 No generic Git prune, force removal, or branch deletion is performed.
@@ -146,6 +148,32 @@ Removal apply can take time on large disposable caches. Do not impose a wrapper
 timeout that kills the remover: use an asynchronous session and an observation
 deadline that reports progress without terminating it. A tool yield is not a process
 timeout. Preserve the session/process identity until completion.
+
+### Interrupted native jj creation
+
+Creation captures the exact parent revision before checkout and persists intent
+before running `jj workspace add`. That mutation has no internal wall-clock timeout;
+watch it asynchronously and do not kill it merely because external storage is slow.
+A failed command retains its intent and any partial directory. Do not retry under a
+new task name to bypass the reservation. Status exposes `registry.jj_creations`.
+
+Recovery is deliberately manual; `recover-jj` handles removal, not creation. Save the
+record, confirm the creator and its children have exited, and inspect the exact path,
+shared repository, workspace registration/revision, token, and complete file inventory.
+A recorded base and registered name alone do not prove checkout completed. Neither
+path nor registration permits reviewed cancellation of only the intent. Both present
+require an exact empty child of the recorded base and complete matching contents
+before reviewed finalization with the preselected identity. Path-only, registration-only,
+foreign token, wrong revision/repository, or unknown contents must remain retained.
+Do not delete, forget, update shared history, adopt an unrecorded directory, or clear
+an intent to bypass an inconsistency. Any approved record repair holds `state.lock`
+and preserves before/after evidence. There is no automatic recovery command yet.
+
+Registry v2 protects these records from older binaries that would otherwise drop
+unknown fields. The first locked write migrates v1 without changing existing leases
+or workspace records. Install the tested binary before migration. Older running
+launchers may fail their final registry updates; retain their leases until the new
+manager verifies their process has exited. Never downgrade the registry version.
 
 ### Interrupted native jj removal
 

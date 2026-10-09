@@ -52,12 +52,24 @@ type Workspace struct {
 	Missing     bool             `json:"missing"`
 	Leases      map[string]Lease `json:"leases"`
 }
+
+// JJCreation is durable intent, retained on every interruption until reviewed.
+// Unlike Git admission reservations it must never expire automatically.
+type JJCreation struct {
+	ID      string    `json:"id"`
+	Path    string    `json:"path"`
+	Common  string    `json:"common_dir"`
+	Name    string    `json:"name"`
+	Base    string    `json:"base"`
+	Created time.Time `json:"created"`
+}
 type State struct {
-	Version        int                   `json:"version"`
-	Workspaces     map[string]*Workspace `json:"workspaces"`
-	Pending        map[string]time.Time  `json:"pending"`
-	LastCachePrune time.Time             `json:"last_cache_prune"`
-	NeedsCompact   bool                  `json:"needs_compact"`
+	JJCreations    map[string]*JJCreation `json:"jj_creations"`
+	Version        int                    `json:"version"`
+	Workspaces     map[string]*Workspace  `json:"workspaces"`
+	Pending        map[string]time.Time   `json:"pending"`
+	LastCachePrune time.Time              `json:"last_cache_prune"`
+	NeedsCompact   bool                   `json:"needs_compact"`
 }
 type Manager struct {
 	cfg       Config
@@ -65,22 +77,24 @@ type Manager struct {
 	verify    func() error
 	space     func(string) (uint64, error)
 	removeDir func(string) error
+	jjAdd     func(string, ...string) (string, error)
 }
 
 func NewManager(c Config) *Manager {
 	m := &Manager{cfg: c, now: time.Now, space: freeSpace, removeDir: os.RemoveAll}
 	m.verify = m.verifyVolumes
+	m.jjAdd = func(dir string, args ...string) (string, error) { return commandMutation(dir, "jj", args...) }
 	return m
 }
 func newState() *State {
-	return &State{Version: 1, Workspaces: map[string]*Workspace{}, Pending: map[string]time.Time{}}
+	return &State{Version: 2, JJCreations: map[string]*JJCreation{}, Workspaces: map[string]*Workspace{}, Pending: map[string]time.Time{}}
 }
 func (m *Manager) statePath() string { return filepath.Join(m.cfg.StateDir, "state.json") }
 func (m *Manager) ReadState() (*State, error) {
-	s := newState()
+	s := &State{}
 	b, e := os.ReadFile(m.statePath())
 	if errors.Is(e, os.ErrNotExist) {
-		return s, nil
+		return newState(), nil
 	}
 	if e != nil {
 		return nil, e
@@ -88,9 +102,15 @@ func (m *Manager) ReadState() (*State, error) {
 	if e = json.Unmarshal(b, s); e != nil {
 		return nil, e
 	}
-	if s.Version != 1 || s.Workspaces == nil || s.Pending == nil {
+	if (s.Version != 1 && s.Version != 2) || s.Workspaces == nil || s.Pending == nil || (s.Version == 2 && s.JJCreations == nil) {
 		return nil, fmt.Errorf("unsupported or incomplete registry")
 	}
+	if s.JJCreations == nil {
+		s.JJCreations = map[string]*JJCreation{}
+	}
+	// The next locked write upgrades v1; old binaries then fail closed instead
+	// of discarding durable creation intent.
+	s.Version = 2
 	return s, nil
 }
 func atomicWrite(path string, b []byte) error {

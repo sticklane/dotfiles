@@ -19,6 +19,13 @@ If admission is full, inspect completed candidates; do not increase the persiste
 cap or delete idle work merely to make room. Any maintenance exception must be
 bounded, explicit, and leave the normal capacity and preservation gates in place.
 
+A slow jj checkout has no internal mutation deadline. Observe it without killing
+it. If creation fails, inspect `registry.jj_creations` and follow the README's
+interrupted-creation procedure; do not create a replacement task, use removal
+recovery, or erase its reservation. The record retains capacity until explicit
+review. Registry v2 rejects older writers; after installing an update, keep any
+old launcher's remaining lease until process identity proves it has exited.
+
 ## Complete
 
 Before ending a completed managed task, review the diff and all untracked/ignored

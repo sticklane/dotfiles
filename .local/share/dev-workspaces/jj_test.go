@@ -37,6 +37,9 @@ func TestJJWorkspaceLeaseAndRetention(t *testing.T) {
 		t.Fatalf("managed run used wrong workspace: %s %v", ran, e)
 	}
 	s, _ := m.ReadState()
+	if len(s.JJCreations) != 0 || len(s.Pending) != 0 {
+		t.Fatal("successful creation left a reservation")
+	}
 	if s.Workspaces[p].Pinned || s.Workspaces[p].Backend != "jj" || !s.Workspaces[p].Finished.IsZero() {
 		t.Fatal("jj workspace must remain unfinished")
 	}
