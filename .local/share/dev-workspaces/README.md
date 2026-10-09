@@ -142,6 +142,11 @@ Do not re-adopt or force-delete it. Even if deletion completed but registry save
 the missing entry for manual review; it never assumes forget succeeded.
 
 
+Removal apply can take time on large disposable caches. Do not impose a wrapper
+timeout that kills the remover: use an asynchronous session and an observation
+deadline that reports progress without terminating it. A tool yield is not a process
+timeout. Preserve the session/process identity until completion.
+
 ### Interrupted native jj removal
 
 Automatic retries remain disabled. Save the exact record and inspect both `path`

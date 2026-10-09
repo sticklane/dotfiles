@@ -54,6 +54,10 @@ requested immediate native jj cleanup, finish it, preview
 `--apply` from outside the target workspace. This skips only retention; the
 caller and its ancestors also count as active owners during removal. Never call `rm -rf`, `jj workspace forget`,
 force removal, or registry edits to bypass a failed preservation/identity check.
+Do not wrap removal apply in a process-killing wall-clock timeout. Large disposable
+caches can take time to delete; use an asynchronous session and a watcher whose
+deadline reports status without killing the remover. If interrupted, stop and use
+the recovery procedure before any retry.
 Do not infer ownership release from age, missing activity markers, task closure,
 or an empty current change. Active leases/open files, dirty or unpublished work,
 unknown ignored data, identity conflicts, and stale jj workspaces fail closed.
