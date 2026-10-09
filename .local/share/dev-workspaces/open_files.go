@@ -66,6 +66,7 @@ func openFilePIDs(data []byte, path string) ([]int, error) {
 	}
 	pid := 0
 	file := false
+	named := false
 	fileType := ""
 	found := map[int]bool{}
 	out := []int{}
@@ -76,6 +77,9 @@ func openFilePIDs(data []byte, path string) ([]int, error) {
 		}
 		switch field[0] {
 		case 'p':
+			if file && !named {
+				return nil, fmt.Errorf("active-file record missing name")
+			}
 			n, e := strconv.Atoi(string(field[1:]))
 			if e != nil || n <= 0 {
 				return nil, fmt.Errorf("invalid active-file process field")
@@ -84,10 +88,17 @@ func openFilePIDs(data []byte, path string) ([]int, error) {
 			file = false
 			fileType = ""
 		case 'f':
+			if file && !named {
+				return nil, fmt.Errorf("active-file record missing name")
+			}
 			if pid == 0 || len(field) < 2 {
 				return nil, fmt.Errorf("invalid active-file descriptor field")
 			}
+			if string(field[1:]) == "NOFD" || string(field[1:]) == "err" {
+				return nil, fmt.Errorf("cannot inspect active process descriptors")
+			}
 			file = true
+			named = false
 			fileType = ""
 		case 't':
 			if pid == 0 || !file || len(field) < 2 {
@@ -95,9 +106,10 @@ func openFilePIDs(data []byte, path string) ([]int, error) {
 			}
 			fileType = string(field[1:])
 		case 'n':
-			if pid == 0 || !file || fileType == "" {
+			if pid == 0 || !file || named {
 				return nil, fmt.Errorf("invalid active-file name field")
 			}
+			named = true
 			if len(field) == 1 {
 				switch fileType {
 				case "NPOLICY", "NEXUS", "PIPE":
@@ -105,6 +117,10 @@ func openFilePIDs(data []byte, path string) ([]int, error) {
 				}
 				return nil, fmt.Errorf("unnamed filesystem or unknown descriptor in active-file snapshot")
 			}
+			// Kernel races may omit type while still providing an exact path.
+			// Match every nonempty name regardless of type; never skip a path
+			// because auxiliary metadata is absent. Type is needed only to
+			// establish that an unnamed descriptor is a known non-file.
 			name := string(field[1:])
 			if (name == path || strings.HasPrefix(name, path+string(os.PathSeparator))) && !found[pid] {
 				found[pid] = true
@@ -113,6 +129,9 @@ func openFilePIDs(data []byte, path string) ([]int, error) {
 		default:
 			return nil, fmt.Errorf("unexpected active-file field %q", field[0])
 		}
+	}
+	if file && !named {
+		return nil, fmt.Errorf("active-file record missing name")
 	}
 	if pid == 0 {
 		return nil, fmt.Errorf("active-file snapshot contains no processes")

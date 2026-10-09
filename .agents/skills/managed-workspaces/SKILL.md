@@ -40,6 +40,12 @@ and even an unknown empty directory blocks deletion.
 
 ## Clean up
 
+Keep inventory bounded: do not launch recursive `du`/`find` across the pool or
+rebuildable caches to decide ownership. Use registered identity, preserved revisions,
+and the janitor's bounded kernel open-file check. Account for and stop your own
+unfinished inventory/test processes before handing off; a tool timeout does not
+prove its process exited. Never terminate another task's process to free capacity.
+
 A user's cleanup request authorizes review and removal of eligible specified work;
 no repeated permission is needed once scope is clear. Preview `dev-workspace gc`
 then apply with `gc --apply` for finished work past retention. For explicitly

@@ -17,7 +17,7 @@ func TestOpenFileSnapshotParsing(t *testing.T) {
 	if e != nil || !reflect.DeepEqual(got, []int{12, 14}) {
 		t.Fatalf("%v %v", got, e)
 	}
-	for _, bad := range []string{"", "p12", "pno\x00", "n/path\x00", "p12\x00n/path\x00", "p12\x00zunknown\x00", "p12\x00f3\x00tREG\x00n\x00"} {
+	for _, bad := range []string{"", "p12", "pno\x00", "n/path\x00", "p12\x00n/path\x00", "p12\x00fNOFD\x00nPermission denied\x00", "p12\x00f3\x00n\x00", "p12\x00f3\x00", "p12\x00f3\x00tREG\x00", "p12\x00f3\x00tREG\x00f4\x00n/path\x00", "p12\x00f3\x00tREG\x00p13\x00", "p12\x00zunknown\x00", "p12\x00f3\x00tREG\x00n\x00"} {
 		if _, e := openFilePIDs([]byte(bad), path); e == nil {
 			t.Fatalf("accepted malformed snapshot %q", bad)
 		}
@@ -63,5 +63,13 @@ func TestOpenFileSnapshotUnnamedNonFilesystemDescriptors(t *testing.T) {
 		if e != nil || len(pids) != 0 {
 			t.Fatalf("%s: %v %v", typ, pids, e)
 		}
+	}
+}
+
+func TestOpenFileSnapshotNamedDescriptorWithoutType(t *testing.T) {
+	data := []byte("p12\x00f3\x00n/pool/task/nested/file\x00\np13\x00f4\x00n/pool/other\x00\n")
+	got, e := openFilePIDs(data, "/pool/task")
+	if e != nil || !reflect.DeepEqual(got, []int{12}) {
+		t.Fatalf("named path lost when type unavailable: %v %v", got, e)
 	}
 }
