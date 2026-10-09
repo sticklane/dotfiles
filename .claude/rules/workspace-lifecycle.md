@@ -1,17 +1,15 @@
 # Workspace lifecycle on this Mac
 
-Use Worktrunk for new worktrees. Its installed Claude plugin routes native worktree
-isolation through the same hooks. New paths belong under `/Volumes/dev-workspaces/worktrees`;
-older worktrees and the Fooszone eval volume remain legacy resources with their existing owners.
-
-Start an isolated session with `dev-workspace start claude <branch>` from its repo.
-For builds and temporary commands in managed worktrees, use
-`dev-workspace run <command> [arguments]`. This sets per-workspace scratch and shared
-APFS cache locations and holds a process lease. Do not create standalone exFAT caches.
-
-After preserving completed commits and required artifacts, use `dev-workspace finish`
-to opt into removal after 24 hours. `dev-workspace pin` retains a workspace explicitly.
-Never force removal, disable hooks, or treat idle activity markers as deletion authority.
-Native Claude removal is subject to the same preservation and lease checks.
-
-See `~/.local/share/dev-workspaces/README.md` for budgets, status, and recovery.
+For isolation use `dev-workspace create <task>` (or `start codex|claude|gemini <task>`)
+from the repository. Check `dev-workspace status` and reuse the registered path for
+the same task before creating another. In managed workspaces run builds/scratch via
+`dev-workspace run`. New workspaces use `/Volumes/dev-workspaces/worktrees` and shared
+APFS caches. Native jj workspaces start unfinished; Git worktrees use Worktrunk hooks.
+When the task is complete, review tracked, untracked, and ignored files, preserve all
+authored work remotely, and explicitly run `dev-workspace finish`. This queues guarded
+cleanup after 24 hours; an empty jj working change requires a remotely preserved parent.
+Use `pin` for intentional retention. Legacy jj workspaces remain pinned until reviewed
+and explicitly unpinned. Never force removal, infer completion from idle time, or bypass
+identity, preservation, lease, and open-file checks. Preserve Codex desktop, legacy,
+and existing worktree ownership. Use the `managed-workspaces` skill for lifecycle work.
+Policy and recovery: `~/.local/share/dev-workspaces/README.md`.

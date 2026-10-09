@@ -37,18 +37,20 @@ type Lease struct {
 	Seen  time.Time `json:"seen"`
 }
 type Workspace struct {
-	ID       string           `json:"id"`
-	Path     string           `json:"path"`
-	GitDir   string           `json:"git_dir"`
-	Common   string           `json:"common_dir"`
-	Branch   string           `json:"branch"`
-	Created  time.Time        `json:"created"`
-	Finished time.Time        `json:"finished,omitempty"`
-	Head     string           `json:"finished_head,omitempty"`
-	Pinned   bool             `json:"pinned"`
-	Removing bool             `json:"removing"`
-	Missing  bool             `json:"missing"`
-	Leases   map[string]Lease `json:"leases"`
+	RemovalPath string           `json:"removal_path,omitempty"`
+	Backend     string           `json:"backend,omitempty"`
+	ID          string           `json:"id"`
+	Path        string           `json:"path"`
+	GitDir      string           `json:"git_dir"`
+	Common      string           `json:"common_dir"`
+	Branch      string           `json:"branch"`
+	Created     time.Time        `json:"created"`
+	Finished    time.Time        `json:"finished,omitempty"`
+	Head        string           `json:"finished_head,omitempty"`
+	Pinned      bool             `json:"pinned"`
+	Removing    bool             `json:"removing"`
+	Missing     bool             `json:"missing"`
+	Leases      map[string]Lease `json:"leases"`
 }
 type State struct {
 	Version        int                   `json:"version"`
@@ -58,14 +60,15 @@ type State struct {
 	NeedsCompact   bool                  `json:"needs_compact"`
 }
 type Manager struct {
-	cfg    Config
-	now    func() time.Time
-	verify func() error
-	space  func(string) (uint64, error)
+	cfg       Config
+	now       func() time.Time
+	verify    func() error
+	space     func(string) (uint64, error)
+	removeDir func(string) error
 }
 
 func NewManager(c Config) *Manager {
-	m := &Manager{cfg: c, now: time.Now, space: freeSpace}
+	m := &Manager{cfg: c, now: time.Now, space: freeSpace, removeDir: os.RemoveAll}
 	m.verify = m.verifyVolumes
 	return m
 }
@@ -132,6 +135,12 @@ func (m *Manager) update(fn func(*State) error) error {
 	if e = fn(s); e != nil {
 		return e
 	}
+	return m.writeStateLocked(s)
+}
+
+// Caller must hold state.lock. Used to persist removal intent without releasing
+// the lock before execution (older processes may otherwise drop new JSON fields).
+func (m *Manager) writeStateLocked(s *State) error {
 	b, e := json.MarshalIndent(s, "", "  ")
 	if e != nil {
 		return e

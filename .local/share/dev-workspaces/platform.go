@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -145,36 +144,6 @@ func currentAncestors() map[int]bool {
 		pid, _ = strconv.Atoi(strings.TrimSpace(s))
 	}
 	return result
-}
-func openFiles(path string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	c := exec.CommandContext(ctx, "/usr/sbin/lsof", "-t", "+D", path)
-	var stderr bytes.Buffer
-	c.Stderr = &stderr
-	b, e := c.Output()
-	if ctx.Err() != nil {
-		return fmt.Errorf("could not complete active-file check")
-	}
-	if e != nil {
-		x, ok := e.(*exec.ExitError)
-		if !ok || x.ExitCode() != 1 || stderr.Len() != 0 {
-			return fmt.Errorf("cannot verify open files: %v %s", e, stderr.String())
-		}
-	}
-	own := currentAncestors()
-	for _, line := range strings.Fields(string(b)) {
-		p, e := strconv.Atoi(line)
-		if e != nil {
-			return e
-		}
-		// macOS lsof may fork a filesystem helper. Completed helpers (and any
-		// other process that has since exited) no longer hold the workspace.
-		if !own[p] && p != c.Process.Pid && !errors.Is(syscall.Kill(p, 0), syscall.ESRCH) {
-			return fmt.Errorf("workspace in use by pid %d", p)
-		}
-	}
-	return nil
 }
 func diskUsage(path string) (uint64, error) {
 	s, e := command("", "/usr/bin/du", "-sk", path)

@@ -1,9 +1,9 @@
 # Managed development workspaces
 
-Worktrunk owns new Git worktrees. `dev-workspace` supplies admission, process leases,
+Native jj workspaces and Worktrunk Git worktrees share one managed lifecycle. `dev-workspace` supplies admission, process leases,
 preservation checks, per-workspace scratch, shared native caches, and crash recovery.
 The code uses only the Go standard library. Configuration and source are tracked in
-the bare dotfiles repository. Worktrunk itself is installed through Homebrew.
+`~/dotfiles-jj` (Git backend `~/.dotfiles.git`). Worktrunk itself is installed through Homebrew.
 
 Agent integration installation commands (already run on this machine):
 
@@ -28,8 +28,9 @@ dev-workspace start gemini feat/example
 Choose one agent per task. Arguments after `--` are passed to that CLI. The agent's
 exit releases its lease; it does **not** mark unfinished work disposable.
 
-To return to a task, use `wt switch <branch>`, then `dev-workspace run codex` (or
-Claude/Gemini). Also use `dev-workspace run <command> [arguments]` for builds,
+Before creating a task, inspect `dev-workspace status` and reuse an existing task.
+To return to a native jj task, cd to its registered path; for Git use `wt switch`.
+Then run `dev-workspace run codex` (or Claude/Gemini). Also use `dev-workspace run <command> [arguments]` for builds,
 test runs, and temporary commands. It configures shared uv, npm, pip, Go/module,
 Playwright, and Puppeteer caches on APFS, plus per-worktree `.dev-build` scratch
 and Cargo build output. These environment values propagate to child processes.
@@ -38,7 +39,10 @@ Use Cabal's `--builddir=.dev-build/cabal` for Haskell builds.
 When the task is done, preserve commits and required artifacts and run
 `dev-workspace finish <path>`. An owning agent can mark completion before exiting;
 its live lease continues to block removal until it exits. The worktree becomes
-eligible after 24 hours. `wt remove <path>` performs guarded immediate removal.
+eligible after 24 hours. Native jj creation explicitly uses `--no-colocate` and starts unpinned but unfinished. Older
+jj workspaces remain pinned until explicitly reviewed and unpinned. For authorized
+immediate jj cleanup, preview `dev-workspace remove-jj <path>` then add `--apply`;
+this skips only retention. `wt remove <path>` handles guarded immediate Git removal.
 Local and remote branches are preserved. `dev-workspace pin <path>` retains a tree;
 `unpin` releases that policy. Unfinished idle trees remain visible until reviewed.
 
@@ -54,7 +58,7 @@ Raw agent launches and commands using `--no-hooks` bypass parts of this protocol
 
 ## Storage and budgets
 
-The new `/Volumes/dev-workspaces` APFS pool is a **64 GiB maximum sparse image** at
+The new `/Volumes/dev-workspaces` APFS pool is a **128 GiB maximum sparse image** at
 `/Volumes/SSK SSD/development/dev-workspaces.sparsebundle`. Its actual available
 capacity is limited by the backing drive. The separate 24 GiB Fooszone image is
 unchanged and is never unmounted or cleaned by this service.
@@ -72,8 +76,8 @@ of future growth. Idle retained checkouts reserve no additional growth; their
 allocated bytes are already reflected in free space. Acquiring a lease rechecks
 capacity under the same registry lock, and nested leases count once per workspace.
 Admission serializes reservations, includes in-flight creations, and requires 8 GiB free in the pool, 12 GiB on SSK, and 2 GiB
-internally **after** reservations where relevant. Maximum registry count is 12;
-current backing-drive headroom permits far fewer. These are admission checks,
+internally **after** reservations where relevant. Maximum present-workspace count is 64, including pending creations;
+missing records remain visible but do not consume slots. Disk budgets still apply. These are admission checks,
 not filesystem quotas: an already running build or unrelated application can
 still exhaust a volume. Recovering roughly 25 GiB of internal headroom remains
 a separate legacy-cleanup priority; the 2 GiB hard floor is transitional.
@@ -107,15 +111,61 @@ in its Git administrative directory, so path reuse cannot authorize deletion.
 Cleanup requires verified volume identity, explicit completion, retention expiry,
 an unchanged branch/HEAD, preserved commits, a clean index and working tree,
 no undeclared ignored data, no Git lock, no pin, no live lease, and no other open
-file handles. Worktrunk removes in the foreground without force or branch deletion.
+file handles. Open-file checks use a bounded kernel snapshot with NUL-delimited
+fields, including cwd and nested descriptors, instead of recursively scanning caches.
+Native immediate removal must run outside the target; even its own caller/ancestors
+count as active owners. Completion may still be recorded by the owning agent. Worktrunk removes in the foreground without force or branch deletion.
 Its pre-remove hook repeats the checks. These checks rely on cooperating launchers;
 they cannot eliminate races with arbitrary external writers bypassing the protocol.
 
 Interrupted creations expire their pending reservation after 10 minutes. An
 unregistered directory is never deleted. Crashed leases are reconciled by process
-identity. Interrupted completed removal releases its registry entry on the next
-sweep. Missing unfinished or identity-conflicting work stays reported for review.
+identity. Interrupted completed removal releases its Git registry entry on the next
+sweep. JJ interruptions remain explicit recovery records. Missing unfinished or identity-conflicting work stays reported for review.
 No generic Git prune, force removal, or branch deletion is performed.
+
+Native jj cleanup snapshots tracked files without auto-tracking new files, then
+requires the exact revision on a remote bookmark or an undescribed empty change
+with one remotely preserved parent. Local main alone is insufficient. It inventories
+untracked and ignored files (including unknown empty directories) without following
+symlinks. Only the documented disposable directories are exempt. A stale workspace
+fails closed; cleanup never updates it automatically. The random token, workspace
+name/revision, external shared repository, leases, and open files are rechecked.
+
+Under one continuous registry lock, the collector persists intent and moves the workspace to a token-bound sibling
+quarantine path, rechecks its contents and owners, forgets only its jj registration,
+then removes the quarantined directory. It never abandons commits, prunes history, or touches sibling
+workspaces. Interrupted removal retains a `removing` registry record with `removal_path` (also derivable as a sibling `.removing-<identity-token>` if an
+older in-memory manager drops the optional field); automatic retries are disabled, including when the original path is missing. Review the exact record, identity,
+filesystem contents, shared repository and preserved revision for manual recovery.
+Do not re-adopt or force-delete it. Even if deletion completed but registry save failed, jj reconciliation retains
+the missing entry for manual review; it never assumes forget succeeded.
+
+
+### Interrupted native jj removal
+
+Automatic retries remain disabled. Save the exact record and inspect both `path`
+and the token-derived sibling quarantine path (`removal_path` is advisory), their
+identity tokens, the shared repository, registration/revision, preservation, and
+active owners. A missing optional field may come from an older loaded manager;
+the existing token and `removing` flag still identify the recovery state.
+
+From outside the target workspace, preview `dev-workspace recover-jj <original-path>`.
+It requires exactly one original/quarantine tree, an intact registered jj workspace,
+unchanged preserved revision, and all ordinary safety checks. Add `--apply` to cancel
+intent (or rename a verified quarantine back), pin the workspace, and reset completion.
+This command does not delete files or re-adopt forgotten work. Review it again before
+unpinning, finishing, and trying removal. Active owners block quarantine renames.
+
+If the registration was forgotten, both trees are absent, or identity/preservation
+checks fail, keep the remaining files and registry for narrowly reviewed manual
+recovery. Do not automatically recreate the name or restore shared operation history.
+A record may be cleared manually under `state.lock` only after exact matching identity,
+absence of both paths, and completed forget are independently established.
+
+Registry repair must not waive a failed data-preservation or ownership check. Never
+remove shared `.jj/repo`, abandon commits, or restore repository-wide operation
+history to repair one workspace. Keep the saved before/after record as evidence.
 
 ```sh
 dev-workspace status
@@ -149,12 +199,20 @@ for. Worktrunk has native plugin uninstall commands; Gemini uses
 ## Development
 
 ```sh
-cd ~/.local/share/dev-workspaces
-./check.sh
-go build -o dev-workspace .
+# In a managed workspace of ~/dotfiles-jj:
+dev-workspace run sh .local/share/dev-workspaces/check.sh
+dev-workspace run sh -c 'cd .local/share/dev-workspaces && go build -o ../../../.dev-build/dev-workspace .'
+# Explicitly install reviewed sources/config and the tested binary into home.
 ```
 
 The dotfiles pre-commit hook runs formatting validation, tests, vet, and plist
-validation for storage changes. Tests use disposable Git repositories and verify
+validation for storage changes. jj does not run Git hooks; run check.sh explicitly. It resolves its own source tree,
+not the installed home copy. Tests use disposable Git and jj repositories and verify
 actual cleanliness, preservation, pins, process liveness, identity, retention,
 capacity reservations, offline mounts, and interrupted lifecycle recovery.
+
+For a bounded diagnostic when external APFS I/O stalls, the managed runner may use
+an existing shared internal Go cache and a small disposable internal test directory.
+Override **both** `TMPDIR` and `GOTMPDIR`; verify their effective values before tests.
+Keep source checkout/leases managed, record the exception, and do not create a new
+per-run cache. The normal build-cache policy remains unchanged.

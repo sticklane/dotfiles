@@ -142,6 +142,9 @@ func (m *Manager) Register(path string) error {
 	})
 }
 func (m *Manager) identity(w *Workspace) error {
+	if w.Backend == "jj" {
+		return m.jjIdentity(w)
+	}
 	if _, e := m.managedPath(w.Path); e != nil {
 		return e
 	}
@@ -180,6 +183,9 @@ func disposable(name string) bool {
 	return false
 }
 func (m *Manager) check(w *Workspace) error {
+	if w.Backend == "jj" {
+		return m.checkJJ(w)
+	}
 	if e := m.identity(w); e != nil {
 		return e
 	}
@@ -259,7 +265,7 @@ func (m *Manager) Finish(path string) error {
 		if e := m.check(&candidate); e != nil {
 			return e
 		}
-		h, e := git(w.Path, "rev-parse", "HEAD")
+		h, e := workspaceHead(w)
 		if e != nil {
 			return e
 		}
@@ -273,7 +279,7 @@ func (m *Manager) Guard(path string) error {
 		if e := m.check(w); e != nil {
 			return e
 		}
-		h, e := git(w.Path, "rev-parse", "HEAD")
+		h, e := workspaceHead(w)
 		if e != nil {
 			return e
 		}
@@ -346,7 +352,7 @@ func (m *Manager) Candidates() []string {
 	}
 	out := []string{}
 	for p, w := range s.Workspaces {
-		if !w.Missing && !w.Pinned && !w.Finished.IsZero() && (w.Removing || m.now().Sub(w.Finished) >= time.Duration(m.cfg.RetentionHours)*time.Hour) {
+		if !(w.Backend == "jj" && w.Removing) && !w.Missing && !w.Pinned && !w.Finished.IsZero() && (w.Removing || m.now().Sub(w.Finished) >= time.Duration(m.cfg.RetentionHours)*time.Hour) {
 			out = append(out, p)
 		}
 	}
@@ -360,7 +366,7 @@ func (m *Manager) Reconcile() error {
 		expirePending(s, m.now())
 		for p, w := range s.Workspaces {
 			if _, e := os.Lstat(p); errors.Is(e, os.ErrNotExist) {
-				if w.Removing {
+				if w.Removing && w.Backend != "jj" {
 					// Worktrunk finished but its background post-remove hook was interrupted.
 					// Only the registry entry is reclaimed; Git metadata is left to Git.
 					delete(s.Workspaces, p)
@@ -371,6 +377,12 @@ func (m *Manager) Reconcile() error {
 				continue
 			} else if e != nil {
 				return e
+			}
+			// Missing-path reconciliation above applies to every record. Only
+			// leased records need expensive identity/process checks here; cleanup
+			// independently validates identity before any removal.
+			if len(w.Leases) == 0 {
+				continue
 			}
 			if e := m.identity(w); e != nil {
 				continue

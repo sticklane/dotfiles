@@ -6,12 +6,16 @@
 
 ## Workspace lifecycle
 
-Use `dev-workspace start gemini <branch>` from a repo for new isolated tasks.
-Worktrunk is the shared manager; new workspaces use `/Volumes/dev-workspaces/worktrees`.
-Keep existing worktrees under their existing owners. In managed workspaces, use
-`dev-workspace run <command> [arguments]` for builds and scratch commands so leases,
-temporary directories, and shared APFS caches are applied consistently.
-After committing and preserving completed work, use `dev-workspace finish`; cleanup
-waits 24 hours and preserves dirty, pinned, locked, or active work. Use
-`dev-workspace pin` for intentional retention. Never force removal or bypass hooks.
-Read `~/.local/share/dev-workspaces/README.md` for policy and recovery.
+For isolation use `dev-workspace create <task>` (or `start codex|claude|gemini <task>`)
+from the repository. Check `dev-workspace status` and reuse the registered path for
+the same task before creating another. In managed workspaces run builds/scratch via
+`dev-workspace run`. New workspaces use `/Volumes/dev-workspaces/worktrees` and shared
+APFS caches. Native jj workspaces start unfinished; Git worktrees use Worktrunk hooks.
+When the task is complete, review tracked, untracked, and ignored files, preserve all
+authored work remotely, and explicitly run `dev-workspace finish`. This queues guarded
+cleanup after 24 hours; an empty jj working change requires a remotely preserved parent.
+Use `pin` for intentional retention. Legacy jj workspaces remain pinned until reviewed
+and explicitly unpinned. Never force removal, infer completion from idle time, or bypass
+identity, preservation, lease, and open-file checks. Preserve Codex desktop, legacy,
+and existing worktree ownership. Use the `managed-workspaces` skill for lifecycle work.
+Policy and recovery: `~/.local/share/dev-workspaces/README.md`.
