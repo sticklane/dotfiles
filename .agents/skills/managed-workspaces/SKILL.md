@@ -37,6 +37,12 @@ its lease still blocks collection. If work is intentionally retained, pin it and
 report why. If finish fails, report the concrete blocker; do not silently abandon
 another unfinished workspace or override the guard.
 
+Finish and removal previews run a snapshotting `jj status`; treat that as a
+mutation, even though it looks like a query. Do not kill it on an observation
+deadline. The same applies to `jj workspace forget`, including when it uses
+`--ignore-working-copy`. Only read-only metadata commands may use the bounded
+query deadline. Preserve the process/session until it completes.
+
 Native jj workspaces now start unpinned but unfinished. Existing native workspaces
 remain pinned. Unpin older workspaces only after a specific ownership/content review;
 then finish. For jj, an unpublished anonymous change is not preserved just because

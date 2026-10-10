@@ -94,6 +94,60 @@ func TestJJFinishSafety(t *testing.T) {
 		})
 	}
 }
+
+// Both commands mutate jj state despite status looking like a query and forget
+// using --ignore-working-copy. Exercise the real one-minute query deadline so
+// accidentally routing either command through it cannot pass this regression.
+func TestJJSlowSnapshotAndForgetComplete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("runs two jj mutations beyond the one-minute query deadline")
+	}
+	m, _, p := jjFixture(t)
+	realJJ, err := exec.LookPath("jj")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bin := t.TempDir()
+	markers := t.TempDir()
+	// Delay each mutation only once, so repeated safety checks stay fast. The
+	// marker directory is outside the candidate and survives its quarantine.
+	script := `#!/bin/sh
+kind=
+for arg do
+  case "$arg" in status|forget) kind="$arg";; esac
+done
+if [ -n "$kind" ] && [ ! -e "$DEV_WORKSPACE_SLOW_JJ/$kind" ]; then
+  : > "$DEV_WORKSPACE_SLOW_JJ/$kind"
+  /bin/sleep 61
+fi
+exec "$DEV_WORKSPACE_REAL_JJ" "$@"
+`
+	if err := os.WriteFile(filepath.Join(bin, "jj"), []byte(script), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DEV_WORKSPACE_REAL_JJ", realJJ)
+	t.Setenv("DEV_WORKSPACE_SLOW_JJ", markers)
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	if err := m.Finish(p); err != nil {
+		t.Fatalf("slow snapshot was interrupted: %v", err)
+	}
+	if err := m.RemoveJJ(p, true); err != nil {
+		t.Fatalf("slow forget was interrupted: %v", err)
+	}
+	for _, kind := range []string{"status", "forget"} {
+		if _, err := os.Stat(filepath.Join(markers, kind)); err != nil {
+			t.Fatalf("%s was not exercised: %v", kind, err)
+		}
+	}
+	state, err := m.ReadState()
+	if err != nil || state.Workspaces[p] != nil {
+		t.Fatalf("completed removal retained registration: %v", err)
+	}
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		t.Fatalf("completed removal retained directory: %v", err)
+	}
+}
+
 func TestJJRemoteNonemptyAndChangedAfterFinish(t *testing.T) {
 	m, r, p := jjFixture(t)
 	os.WriteFile(filepath.Join(p, "work"), []byte("preserved"), 0600)

@@ -134,6 +134,13 @@ symlinks. Only the documented disposable directories are exempt. A stale workspa
 fails closed; cleanup never updates it automatically. The random token, workspace
 name/revision, external shared repository, leases, and open files are rechecked.
 
+The snapshotting `jj status` used by finish and removal, and the later
+`jj workspace forget`, have no process-killing command deadline. Even a preview
+can snapshot jj state. Read-only metadata commands keep the bounded query
+deadline; jj metadata reads use `--ignore-working-copy`. That flag does not make
+an explicit mutation such as `workspace forget` read-only. Observe slow operations
+without terminating them, and retain the owning process/session until completion.
+
 Under one continuous registry lock, the collector persists intent and moves the workspace to a token-bound sibling
 quarantine path, rechecks its contents and owners, forgets only its jj registration,
 then removes the quarantined directory. It never abandons commits, prunes history, or touches sibling

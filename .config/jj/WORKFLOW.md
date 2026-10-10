@@ -91,6 +91,9 @@ For user-authorized immediate cleanup of a specific finished native workspace,
 preview `dev-workspace remove-jj <path>`, then use the same command with `--apply` from outside that workspace.
 This bypasses only the retention delay; every preservation/identity/process check
 still applies. It forgets that workspace, never shared commits or operation history.
+Finish and removal previews may snapshot through `jj status`; that is a mutation.
+Neither this snapshot nor `jj workspace forget` has a process-killing deadline.
+Do not add a timeout around them; observe asynchronously until completion.
 Removal first quarantines the tree. An interruption retains its registry record
 and any remaining quarantine for manual recovery, even if the original path is gone. Use `dev-workspace recover-jj <original-path>` to preview safe cancellation/restore
 while the preserved registration exists; `--apply` pins it and resets completion.

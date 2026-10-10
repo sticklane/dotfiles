@@ -59,8 +59,10 @@ func (m *Manager) checkJJ(w *Workspace) error {
 	}
 	// Snapshot tracked files, including deletions, but never implicitly track new
 	// files. Stale workspaces fail closed: cleanup never runs update-stale.
-	if _, err := command(w.Path, "jj", "--config", `snapshot.auto-track="none()"`, "status"); err != nil {
-		return err
+	// Status snapshots the working copy and therefore mutates jj state. Do not
+	// put it under the read-only command deadline, even during a preview.
+	if _, err := commandMutation(w.Path, "jj", "--config", `snapshot.auto-track="none()"`, "status"); err != nil {
+		return fmt.Errorf("snapshot jj working copy: %w", err)
 	}
 	head, err := workspaceHead(w)
 	if err != nil {
@@ -207,8 +209,8 @@ func (m *Manager) RemoveJJ(path string, apply bool) error {
 		if err := m.checkJJ(&quarantined); err != nil {
 			return fmt.Errorf("quarantined workspace requires manual recovery: %w", err)
 		}
-		if _, err := command(w.RemovalPath, "jj", "--ignore-working-copy", "workspace", "forget", w.Branch); err != nil {
-			return err
+		if _, err := commandMutation(w.RemovalPath, "jj", "--ignore-working-copy", "workspace", "forget", w.Branch); err != nil {
+			return fmt.Errorf("forget quarantined jj workspace: %w", err)
 		}
 		// Forget changes no files and does not remove commits or shared operation history.
 		if err := m.jjIdentity(&quarantined); err != nil {
