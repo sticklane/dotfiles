@@ -14,15 +14,21 @@ import (
 )
 
 type boundedOutput struct {
-	bytes.Buffer
-	limit int
+	buffer bytes.Buffer
+	limit  int
 }
+
+// Do not embed bytes.Buffer: its promoted ReadFrom lets io.Copy (including
+// os/exec's pipe copier) bypass Write and silently discard the output bound.
+func (b *boundedOutput) Len() int       { return b.buffer.Len() }
+func (b *boundedOutput) Bytes() []byte  { return b.buffer.Bytes() }
+func (b *boundedOutput) String() string { return b.buffer.String() }
 
 func (b *boundedOutput) Write(p []byte) (int, error) {
 	if len(p) > b.limit-b.Len() {
 		return 0, fmt.Errorf("active-file snapshot exceeds output limit")
 	}
-	return b.Buffer.Write(p)
+	return b.buffer.Write(p)
 }
 
 // lsof +D recursively stats the entire checkout, including rebuildable caches.

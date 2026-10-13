@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,6 +10,52 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestBoundedOutputThroughCopyAndExec(t *testing.T) {
+	if _, bypass := any(&boundedOutput{}).(io.ReaderFrom); bypass {
+		t.Fatal("ReaderFrom bypasses bounded Write")
+	}
+	b := boundedOutput{limit: 3}
+	if _, err := b.Write([]byte("12")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := b.Write([]byte("34")); err == nil || b.String() != "12" {
+		t.Fatal("overflow after a partial write changed the buffer", err)
+	}
+	if _, err := b.Write([]byte("3")); err != nil || b.String() != "123" {
+		t.Fatal("exact limit rejected", err)
+	}
+	for _, value := range []string{"123", "1234"} {
+		for _, method := range []string{"copy", "stdout", "stderr"} {
+			t.Run(method+"/"+value, func(t *testing.T) {
+				b := boundedOutput{limit: 3}
+				var err error
+				if method == "copy" {
+					_, err = io.Copy(&b, struct{ io.Reader }{strings.NewReader(value)})
+				} else {
+					script := `printf '%s' "$1"`
+					if method == "stderr" {
+						script += " >&2"
+					}
+					cmd := exec.Command("sh", "-c", script, "bounded-output", value)
+					if method == "stdout" {
+						cmd.Stdout = &b
+					} else {
+						cmd.Stderr = &b
+					}
+					err = cmd.Run()
+				}
+				if len(value) > b.limit {
+					if err == nil || b.Len() > b.limit {
+						t.Fatalf("bound bypassed: len=%d err=%v", b.Len(), err)
+					}
+				} else if err != nil || b.String() != value {
+					t.Fatalf("bounded output lost: %q %v", b.String(), err)
+				}
+			})
+		}
+	}
+}
 
 func TestOpenFileSnapshotParsing(t *testing.T) {
 	path := "/pool/work space\nline"
