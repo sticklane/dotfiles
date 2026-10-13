@@ -71,6 +71,7 @@ dev-workspace run <command> [arguments]    Run with a lease and managed caches
 dev-workspace finish [path]              Mark preserved work for cleanup after 24 hours
 dev-workspace remove-jj <path> [--apply]   Preview/apply immediate cleanup of explicitly finished jj work
 dev-workspace recover-jj <path> [--apply]  Preview/restore an interrupted, still-preserved jj removal
+dev-workspace resume-jj-removal <path> [--apply]  Verify and finish a forgotten jj quarantine
 dev-workspace pin|unpin [path]           Control explicit retention
 dev-workspace status                    Show budgets, registry, and disk use
 dev-workspace gc [--apply]               Preview/apply cleanup of completed work only
@@ -130,6 +131,11 @@ dev-workspace hook <admit|register|guard|removed>  Worktrunk lifecycle hooks`)
 			return fmt.Errorf("usage: recover-jj <path> [--apply]")
 		}
 		return m.RecoverJJ(path, len(args) == 3)
+	case "resume-jj-removal":
+		if len(args) < 2 || len(args) > 3 || (len(args) == 3 && args[2] != "--apply") {
+			return fmt.Errorf("usage: resume-jj-removal <path> [--apply]")
+		}
+		return m.ResumeJJRemoval(path, len(args) == 3)
 	case "pin":
 		return m.Pin(path, true)
 	case "unpin":

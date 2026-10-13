@@ -81,6 +81,12 @@ and inspect that exact record and quarantine directory (even if the original pat
 is missing) rather than repeatedly applying cleanup. Follow the README interruption decision tree. Preview `dev-workspace recover-jj
 <original-path>` and apply only that verified recovery: it restores a still-registered
 preserved tree, pins it, and resets completion. It never re-adopts forgotten work.
+For an already-forgotten registration with intact quarantine identity metadata,
+use the separate `resume-jj-removal <original-path>` preview. Review its exact
+token, preserved revision and bounded remaining-file proof before `--apply`.
+It requires live origin preservation and fresh identity/ownership checks; unknown
+or changed content blocks deletion. Missing quarantine or metadata still requires
+manual review. Do not substitute restoration, re-adoption, or manual deletion.
 If an older loaded manager dropped `removal_path`, derive the sibling
 `.removing-<identity-token>` from the record; never substitute an arbitrary path. A registry repair may
 restore a verified interrupted state, never waive preservation/ownership checks.

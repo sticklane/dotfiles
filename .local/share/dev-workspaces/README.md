@@ -197,9 +197,28 @@ intent (or rename a verified quarantine back), pin the workspace, and reset comp
 This command does not delete files or re-adopt forgotten work. Review it again before
 unpinning, finishing, and trying removal. Active owners block quarantine renames.
 
-If the registration was forgotten, both trees are absent, or identity/preservation
-checks fail, keep the remaining files and registry for narrowly reviewed manual
-recovery. Do not automatically recreate the name or restore shared operation history.
+If the registration was already forgotten but the exact quarantine and its jj
+identity metadata remain, preview `dev-workspace resume-jj-removal <original-path>`
+from outside both paths. This separate operation requires a finished, unpinned
+removal record, absent original path, matching token/shared repository, and an
+absent workspace name. It compares every surviving non-disposable file, symlink
+target and executable bit against the immutable finished revision (or its eligible
+empty-change parent). Unknown files and even empty directories block completion;
+missing tracked files are permitted only in this interrupted-deletion state.
+The proof requires a currently live origin branch, ignores Git replacement objects
+and refuses grafts. It bounds inventory to 100,000 entries, 64 MiB per file,
+512 MiB total content, and five minutes. Identity, volume, lease/open-file and
+origin-preservation checks repeat under the same registry lock before deletion.
+After reviewing the exact preview, add `--apply` to finish only that quarantine.
+This never re-adopts or forgets a workspace, changes shared history, or enables
+automatic retry. Preserve the preview, command outcome and before/after registry.
+
+If either identity metadata or the quarantine is missing, both trees are absent,
+or any identity/preservation check fails, keep the remaining files and registry
+for narrowly reviewed manual recovery. Do not automatically recreate the name or
+restore shared operation history. A partial failure that removes identity metadata,
+or a registry-save failure after successful deletion, still requires manual review;
+the command must not infer completion from an absent directory.
 A record may be cleared manually under `state.lock` only after exact matching identity,
 absence of both paths, and completed forget are independently established.
 

@@ -97,6 +97,11 @@ Do not add a timeout around them; observe asynchronously until completion.
 Removal first quarantines the tree. An interruption retains its registry record
 and any remaining quarantine for manual recovery, even if the original path is gone. Use `dev-workspace recover-jj <original-path>` to preview safe cancellation/restore
 while the preserved registration exists; `--apply` pins it and resets completion.
+For an already-forgotten registration with intact quarantine identity metadata,
+the separate `dev-workspace resume-jj-removal <original-path>` previews guarded
+completion. Review the exact token, revision and remaining-file preservation proof
+before adding `--apply`; run outside both paths. Missing metadata or quarantine
+still requires manual review. This command never recreates or forgets a registration.
 Otherwise do not force-delete it, restore shared history, or automatically re-adopt it. Idle time,
 task closure, or an empty current change does not authorize deletion. Existing
 Codex-managed, legacy, and linked Git worktrees keep their original owners/lifecycle.
