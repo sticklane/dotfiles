@@ -264,6 +264,16 @@ dev-workspace run sh -c 'cd .local/share/dev-workspaces && go build -o ../../../
 # Explicitly install reviewed sources/config and the tested binary into home.
 ```
 
+Local execution restrictions take precedence over these development commands.
+When local Go tests/builds are prohibited, freeze and review a substantial patch,
+then use one isolated cloud batch with the same formatting, full-test and vet
+gates, plus a target-platform binary build. Upload only the explicit source/test
+allowlist and retain failed-run results. Do not submit a build for every edit or
+rerun successful checks without a changed risk or diagnosed failure. A Linux
+suite and Darwin cross-build do not verify APFS, launchd or macOS process access;
+check the plist and use the resulting binary for native status and a non-deleting
+preview before any cleanup.
+
 The dotfiles pre-commit hook runs formatting validation, tests, vet, and plist
 validation for storage changes. jj does not run Git hooks; run check.sh explicitly. It resolves its own source tree,
 not the installed home copy. Tests use disposable Git and jj repositories and verify

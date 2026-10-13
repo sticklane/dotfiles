@@ -97,7 +97,13 @@ must remain intact.
 
 Inspect canonical versus installed code/config before editing. Use a managed
 workspace, run its own `.local/share/dev-workspaces/check.sh` through the managed
-runner, and independently review deletion-path changes. Tests must cover unpublished,
+runner, and independently review deletion-path changes. If the user or repository
+prohibits local tests or compilation, do not run them through this workflow either.
+Use one isolated cloud batch for a reviewed, substantial change; include formatting,
+full tests, vet and the target binary build, preserving failed-run evidence. Do not
+submit CI for each small edit. Cross-platform checks do not establish macOS volume
+or process behavior: validate the tested binary with native read-only status and
+explicit removal preview before installation/removal. Tests must cover unpublished,
 ignored, active, replaced, and interrupted work as well as successful cleanup.
 Install only reviewed sources/config and the tested binary; preserve unrelated home
 instructions. Verify launchd uses that installation and preview against real state
